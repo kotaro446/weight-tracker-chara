@@ -1,0 +1,22 @@
+<!-- ここはあとでログアウトボタンを作るために一応作っておきました。使わなかったら消していいです-->
+
+<header th:fragment="header">
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <a th:href="@{/}">体重管理アプリ</a>
+        </div>
+        <div class="navbar-menu">
+            <ul class="navbar-items">
+                <li><a th:href="@{/}">ホーム</a></li>
+                <li><a th:href="@{/history}">履歴</a></li>
+            </ul>
+            <!-- ログイン情報を表示 -->
+            <div class="user-info">
+                <span th:text="${user != null ? user.username : ''}"></span>
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <button type="submit" class="btn-logout">ログアウト</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</header>

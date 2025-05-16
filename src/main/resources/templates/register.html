@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アカウント登録 - 体重管理アプリ</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>体重管理アプリ</h1>
+        <div class="card">
+            <h2>アカウント登録</h2>
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}">
+                エラーメッセージ
+            </div>
+
+            <form th:action="@{/register}" method="post">
+                <div class="form-group">
+                    <label for="username">ユーザー名:</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">メールアドレス:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">パスワード:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">パスワード（確認）:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">登録</button>
+                </div>
+            </form>
+
+            <div class="mt-3">
+                <p>既にアカウントをお持ちの場合: <a th:href="@{/login}">ログイン</a></p>
+            </div>
+        </div>
+
+        <div class="mt-3 text-center">
+            <p>© 2025 体重管理アプリ</p>
+        </div>
+    </div>
+</body>
+
+</html>

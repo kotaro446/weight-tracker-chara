@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.weighttracker.entity.User;
 import com.weighttracker.entity.WeightRecord;
+import com.weighttracker.service.UserService;
 import com.weighttracker.service.WeatherService;
 import com.weighttracker.service.WeightService;
 
@@ -27,11 +29,21 @@ public class WeightController {
     @Autowired
     private WeatherService weatherService;
     
+    @Autowired
+    private UserService userService;
+    
     // ホームページを表示
     @GetMapping
     public String home(Model model) {
-        // 仮のユーザーID
-        Integer userId = 1;
+        // 現在ログインしているユーザーのIDを取得
+        Integer userId = userService.getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
+        // ユーザー情報を取得
+        User currentUser = userService.getUserById(userId);
+        model.addAttribute("user", currentUser);
         
         // ユーザーの体重記録を取得
         List<WeightRecord> records = weightService.getWeightRecordsByUserId(userId);
@@ -49,6 +61,13 @@ public class WeightController {
             model.addAttribute("rank", rank);
         }
         
+        // 目標体重との差を計算（目標体重が設定されている場合）
+        if (currentUser.getTargetWeight() != null && !records.isEmpty()) {
+            Double latestWeight = records.get(0).getWeight();
+            Double targetDifference = latestWeight - currentUser.getTargetWeight();
+            model.addAttribute("targetDifference", targetDifference);
+        }
+        
         // 天気情報を取得して追加
         Map<String, Object> weatherData = weatherService.getDefaultCityWeather();
         model.addAttribute("weatherData", weatherData);
@@ -63,8 +82,15 @@ public class WeightController {
     // グラフページを表示
     @GetMapping("/chart")
     public String showChart(Model model) {
-        // 仮のユーザーID
-        Integer userId = 1;
+        // 現在ログインしているユーザーのIDを取得
+        Integer userId = userService.getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
+        // ユーザー情報を取得
+        User currentUser = userService.getUserById(userId);
+        model.addAttribute("user", currentUser);
         
         // ユーザーの体重記録を取得
         List<WeightRecord> records = weightService.getWeightRecordsByUserId(userId);
@@ -80,8 +106,15 @@ public class WeightController {
     // 履歴ページを表示
     @GetMapping("/history")
     public String showHistory(Model model) {
-        // 仮のユーザーID
-        Integer userId = 1;
+        // 現在ログインしているユーザーのIDを取得
+        Integer userId = userService.getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
+        // ユーザー情報を取得
+        User currentUser = userService.getUserById(userId);
+        model.addAttribute("user", currentUser);
         
         // ユーザーの体重記録を取得
         List<WeightRecord> records = weightService.getWeightRecordsByUserId(userId);
@@ -97,18 +130,49 @@ public class WeightController {
     // 設定ページを表示
     @GetMapping("/settings")
     public String showSettings(Model model) {
+        // 現在ログインしているユーザーのIDを取得
+        Integer userId = userService.getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
+        // ユーザー情報を取得
+        User currentUser = userService.getUserById(userId);
+        model.addAttribute("user", currentUser);
+        
         return "settings";
+    }
+    
+    // 目標体重の設定を処理
+    @PostMapping("/settings/target-weight")
+    public String updateTargetWeight(@RequestParam("targetWeight") Double targetWeight) {
+        Integer userId = userService.getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
+        userService.updateTargetWeight(userId, targetWeight);
+        return "redirect:/settings";
     }
     
     // 詳細ページを表示
     @GetMapping("/details/{id}")
     public String showDetails(@PathVariable("id") Long id, Model model) {
+        // 現在ログインしているユーザーのIDを取得
+        Integer userId = userService.getCurrentUserId();
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
         // 体重記録の詳細を取得
         WeightRecord record = weightService.getWeightRecordById(id);
-        model.addAttribute("weightRecord", record);
         
-        // 仮のユーザーID
-        Integer userId = 1;
+        // 記録が現在のユーザーのものか確認
+        if (!record.getUserId().equals(userId)) {
+            return "redirect:/";  // 他のユーザーの記録へのアクセスを拒否
+        }
+        
+        model.addAttribute("weightRecord", record);
         
         // 平均体重を計算
         Double averageWeight = weightService.calculateAverageWeight(userId);
@@ -128,8 +192,11 @@ public class WeightController {
         System.out.println("体重が送信されました: " + weight + ", 日付: " + recordedDateStr);
         
         try {
-            // 仮のユーザーID
-            Integer userId = 1;
+            // 現在ログインしているユーザーのIDを取得
+            Integer userId = userService.getCurrentUserId();
+            if (userId == null) {
+                return "redirect:/login";
+            }
             
             // 文字列からLocalDate型への変換
             LocalDate recordedDate = LocalDate.parse(recordedDateStr);
@@ -148,6 +215,18 @@ public class WeightController {
     @GetMapping("/delete/{id}")
     public String deleteWeight(@PathVariable("id") Long id) {
         try {
+            // 現在ログインしているユーザーのIDを取得
+            Integer userId = userService.getCurrentUserId();
+            if (userId == null) {
+                return "redirect:/login";
+            }
+            
+            // 記録が現在のユーザーのものか確認
+            WeightRecord record = weightService.getWeightRecordById(id);
+            if (!record.getUserId().equals(userId)) {
+                return "redirect:/";  // 他のユーザーの記録の削除を拒否
+            }
+            
             weightService.deleteWeightRecord(id);
         } catch (Exception e) {
             System.err.println("削除エラー: " + e.getMessage());
