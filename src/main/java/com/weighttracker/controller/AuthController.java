@@ -42,6 +42,7 @@ public class AuthController {
         }
         
         try {
+            @SuppressWarnings("unused")
             User user = userService.registerUser(username, password, email);
             redirectAttributes.addFlashAttribute("success", "登録が完了しました。ログインしてください。");
             return "redirect:/login";

@@ -186,6 +186,7 @@ public class WeightController {
     }
     
     @PostMapping("/add")
+    @SuppressWarnings("CallToPrintStackTrace")
     public String addWeight(@RequestParam("weight") Double weight, 
                         @RequestParam("recordedDate") String recordedDateStr) {
         // デバッグ出力を追加
